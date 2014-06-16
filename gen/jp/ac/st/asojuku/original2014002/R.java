@@ -34,7 +34,7 @@ public final class R {
         public static final int edtMsg=0x7f080003;
         public static final int imageView1=0x7f080007;
         public static final int linearLayout1=0x7f080000;
-        public static final int listView1=0x7f080008;
+        public static final int lstHitokoto=0x7f080008;
         public static final int textView2=0x7f080002;
         public static final int txvHITOKOTO=0x7f080001;
     }
