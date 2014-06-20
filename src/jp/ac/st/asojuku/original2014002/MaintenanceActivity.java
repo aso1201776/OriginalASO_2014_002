@@ -1,7 +1,6 @@
 package jp.ac.st.asojuku.original2014002;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -12,6 +11,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 
 public class MaintenanceActivity extends Activity implements
 	 View.OnClickListener, AdapterView.OnItemClickListener {
@@ -57,23 +57,51 @@ public class MaintenanceActivity extends Activity implements
 	@Override
 	public void onClick(View v) {
 		// TODO 自動生成されたメソッド・スタブ
-		Intent intent = null;
 		switch(v.getId()){
 			case R.id.btnback:
-
-				intent = new Intent(MaintenanceActivity.this, MainActivity.class);
-				startActivity(intent);
+				//今の画面Activityを消して、前の画面Activityに戻る
+				finish();
 				break;
 			case R.id.btndelete:
-
+				//選択行があれば
+				if(this.selectedID != -1) {
+					this.deleteFromHitokoto(this.selectedID);
+					ListView lstHitokoto = (ListView)findViewById(R.id.lstHitokoto);
+					//ListViewにDBをセット
+					this.setDBValuetoList(lstHitokoto);
+					//選択行を忘れる
+					this.selectedID = -1;
+					this.lastPosition = -1;
+				} else {
+					//なければ、トースト(簡易メッセージ）を表示
+					Toast.makeText(MaintenanceActivity.this, "削除する行を選んでください。", Toast.LENGTH_SHORT).show();
+				}
 				break;
 		}
 	}
 
+	/**
+	 * @param AdapterView<?> parent クリックしたListView
+	 * @param View view クリックしたListViewの中の各行
+	 * @param int position 何行目をクリックしたか
+	 * @param long viewid 未使用
+	 */
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 		// TODO 自動生成されたメソッド・スタブ
+		//前に選択中の行があれば背景色を透明にする
+		if(this.selectedID!=-1){
+			parent.getChildAt(this.lastPosition).setBackgroundColor(0);
+		}
+		//選択中の行の背景色をグレーにする
+		view.setBackgroundColor(android.graphics.Color.LTGRAY);
 
+		//選択中のレコードを指し示すカーソルを取得
+		SQLiteCursor cursor = (SQLiteCursor)parent.getItemAtPosition(position);
+		//カーソルのレコードから｢_id｣の値を取得して記憶
+		this.selectedID = cursor.getInt(cursor.getColumnIndex("_id"));
+		//何行目を選択したかも記憶
+		this.lastPosition = position;
 	}
 
 	/*
@@ -112,4 +140,21 @@ public class MaintenanceActivity extends Activity implements
 		lstHitokoto.setAdapter(adapter);
 	}
 
+	/**
+	 * Hitokotoテーブルから、引数で指定した｢_id｣と同じ値を持つレコードを削除
+	 * @param id 指定する値
+	 */
+	private void deleteFromHitokoto(int id) {
+		//クラスのフィールド変数がNULLならデータベース空間オープン
+		if(sdb == null) {
+			helper = new MySQLiteOpenHelper(getApplicationContext());
+		} try {
+			sdb = helper.getWritableDatabase();
+		} catch(SQLiteException e) {
+			//異常終了
+			Log.e("ERROR", e.toString());
+		}
+		//MySQLiteOpenHelperにDELETE文を実行させる
+		this.helper.deleteHitokoto(sdb, id);
+	}
 }
